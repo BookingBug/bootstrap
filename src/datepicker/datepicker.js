@@ -334,9 +334,13 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     }
   };
 
+  var createDateObject = this.createDateObject.bind(this);
+
   $element.on('keydown', function(evt) {
     $scope.$apply(function() {
       $scope.keydown(evt);
+      var dateLabel = angular.extend(createDateObject($scope.activeDt.date, 'fullDate')).label;
+      dateLabel && $(evt.target).closest('.uib-daypicker').find('.datepicker-selected-date').html(dateLabel);
     });
   });
 
