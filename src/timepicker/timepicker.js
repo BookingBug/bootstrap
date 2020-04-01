@@ -585,6 +585,8 @@ angular.module('ui.bootstrap.timepicker', [])
 
       if (ngModelCtrl) {
         timepickerCtrl.init(ngModelCtrl, element.find('input'));
+        element.find('input:eq(0)').attr('aria-label', attrs.hoursLabel);
+        element.find('input:eq(1)').attr('aria-label', attrs.minutesLabel);
       }
     }
   };
