@@ -171,7 +171,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       query: 'query',
       position: 'position',
       'assign-is-open': 'assignIsOpen(isOpen)',
-      debounce: 'debounceUpdate'
+      debounce: 'debounceUpdate',
+      'on-load-text': attrs.onLoadText
     });
     //custom item template
     if (angular.isDefined(attrs.typeaheadTemplateUrl)) {
@@ -611,7 +612,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
         moveInProgress: '=',
         select: '&',
         assignIsOpen: '&',
-        debounce: '&'
+        debounce: '&',
+        onLoadText: '='
       },
       replace: true,
       templateUrl: function(element, attrs) {

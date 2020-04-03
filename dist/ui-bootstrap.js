@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.5.4 - 2020-04-01
+ * Version: 2.5.4 - 2020-04-03
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module('ui.bootstrap.collapse', [])
@@ -1764,7 +1764,9 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     $scope.$apply(function() {
       $scope.keydown(evt);
       var dateLabel = angular.extend(createDateObject($scope.activeDt.date, 'fullDate')).label;
-      dateLabel && $(evt.target).closest('.uib-daypicker').find('.datepicker-selected-date').html(dateLabel);
+      if (dateLabel) {
+        $(evt.target).closest('.uib-daypicker').find('.datepicker-selected-date').html(dateLabel);
+      }
     });
   });
 
@@ -6889,7 +6891,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       query: 'query',
       position: 'position',
       'assign-is-open': 'assignIsOpen(isOpen)',
-      debounce: 'debounceUpdate'
+      debounce: 'debounceUpdate',
+      'on-load-text': attrs.onLoadText
     });
     //custom item template
     if (angular.isDefined(attrs.typeaheadTemplateUrl)) {
@@ -7329,7 +7332,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
         moveInProgress: '=',
         select: '&',
         assignIsOpen: '&',
-        debounce: '&'
+        debounce: '&',
+        onLoadText: '='
       },
       replace: true,
       templateUrl: function(element, attrs) {
