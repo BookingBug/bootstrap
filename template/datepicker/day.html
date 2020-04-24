@@ -71,7 +71,7 @@
           tabindex="0"
           role="radio"
           aria-checked="{{dt.selected ? 'true' : 'false'}}"
-          aria-label="{{dt.date | datetime:'dddd Do MMMM '}}">
+          aria-label="{{:: moment(dt.date).startOf('month').add(dt.label - 1,'days').format('dddd Do MMMM') }}">
           <span ng-class="::{'text-muted': dt.secondary, 'text-info': dt.current}">{{::dt.label}}</span>
         </button>
       </td>

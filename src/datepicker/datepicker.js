@@ -339,12 +339,18 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   $element.on('keydown', function(evt) {
     $scope.$apply(function() {
       $scope.keydown(evt);
+    });
+  });
+
+  $element.on('keyup', function(evt) {
+    $scope.$apply(function() {
       var dateLabel = angular.extend(createDateObject($scope.activeDt.date, 'fullDate')).label;
       if (dateLabel) {
         $(evt.target).closest('.uib-daypicker').find('.datepicker-selected-date').html(dateLabel);
       }
     });
   });
+
 
   $scope.$on('$destroy', function() {
     //Clear all watch listeners on destroy
@@ -401,6 +407,7 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   }
 
   this.init = function(ctrl) {
+    scope.moment = moment;
     angular.extend(ctrl, this);
     scope.showWeeks = ctrl.showWeeks;
     ctrl.refreshView();

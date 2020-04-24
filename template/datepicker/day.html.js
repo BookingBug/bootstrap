@@ -73,7 +73,7 @@ angular.module("uib/template/datepicker/day.html", []).run(["$templateCache", fu
     "          tabindex=\"0\"\n" +
     "          role=\"radio\"\n" +
     "          aria-checked=\"{{dt.selected ? 'true' : 'false'}}\"\n" +
-    "          aria-label=\"{{dt.date | datetime:'dddd Do MMMM '}}\">\n" +
+    "          aria-label=\"{{:: moment(dt.date).startOf('month').add(dt.label - 1,'days').format('dddd Do MMMM') }}\">\n" +
     "          <span ng-class=\"::{'text-muted': dt.secondary, 'text-info': dt.current}\">{{::dt.label}}</span>\n" +
     "        </button>\n" +
     "      </td>\n" +
