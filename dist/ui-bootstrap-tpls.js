@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.5.4 - 2020-04-24
+ * Version: 2.5.4 - 2020-05-28
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module("ui.bootstrap.tpls", ["uib/template/accordion/accordion-group.html","uib/template/accordion/accordion.html","uib/template/alert/alert.html","uib/template/carousel/carousel.html","uib/template/carousel/slide.html","uib/template/datepicker/datepicker.html","uib/template/datepicker/day.html","uib/template/datepicker/month.html","uib/template/datepicker/year.html","uib/template/datepickerPopup/popup.html","uib/template/modal/window.html","uib/template/pager/pager.html","uib/template/pagination/pagination.html","uib/template/tooltip/tooltip-html-popup.html","uib/template/tooltip/tooltip-popup.html","uib/template/tooltip/tooltip-template-popup.html","uib/template/popover/popover-html.html","uib/template/popover/popover-template.html","uib/template/popover/popover.html","uib/template/progressbar/bar.html","uib/template/progressbar/progress.html","uib/template/progressbar/progressbar.html","uib/template/rating/rating.html","uib/template/tabs/tab.html","uib/template/tabs/tabset.html","uib/template/timepicker/timepicker.html","uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]);
@@ -6792,6 +6792,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     //a callback executed when a match is selected
     var onSelectCallback = $parse(attrs.typeaheadOnSelect);
 
+    var valueFromLabel = attrs.typeaheadValueFromLabel;
+
     //should it select highlighted popup value when losing focus?
     var isSelectOnBlur = angular.isDefined(attrs.typeaheadSelectOnBlur) ? originalScope.$eval(attrs.typeaheadSelectOnBlur) : false;
 
@@ -6831,6 +6833,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
     //expressions used by typeahead
     var parserResult = typeaheadParser.parse(attrs.uibTypeahead);
+    var typeaheadPrepend = originalScope.$eval(attrs.typeaheadPrepend);
+    var typeaheadAppend = originalScope.$eval(attrs.typeaheadAppend);
 
     var hasFocus;
 
@@ -6955,19 +6959,45 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
         //but we are interested only in responses that correspond to the current view value
         var onCurrentRequest = inputValue === modelCtrl.$viewValue;
         if (onCurrentRequest && hasFocus) {
-          if (matches && matches.length > 0) {
+          if (matches && matches.length > 0 || typeaheadPrepend || typeaheadAppend) {
             scope.activeIdx = focusFirst ? 0 : -1;
             isNoResultsSetter(originalScope, false);
             scope.matches.length = 0;
 
             //transform labels
-            for (var i = 0; i < matches.length; i++) {
-              locals[parserResult.itemName] = matches[i];
-              scope.matches.push({
-                id: getMatchId(i),
-                label: parserResult.viewMapper(scope, locals),
-                model: matches[i]
-              });
+            if (matches) {
+              for (var i = 0; i < matches.length; i++) {
+                locals[parserResult.itemName] = matches[i];
+                scope.matches.push({
+                  id: getMatchId(i),
+                  label: parserResult.viewMapper(scope, locals),
+                  model: matches[i]
+                });
+              }
+            }
+
+            if (typeaheadPrepend) {
+              for (var j=0; j<typeaheadPrepend.length; j++) {
+                var item = typeaheadPrepend[j];
+                var index = i + j;
+                scope.matches.splice(j,0,{
+                  id: getMatchId(index),
+                  label: item.name,
+                  model: item
+                });
+              }
+            }
+
+            if (typeaheadAppend) {
+              for (var k=0; k<typeaheadAppend.length; k++) {
+                var item = typeaheadAppend[k];
+                var index = i + (j || 0) + k;
+                scope.matches.splice(index,0,{
+                  id: getMatchId(index),
+                  label: item.name,
+                  model: item
+                });
+              }
             }
 
             scope.query = inputValue;
@@ -7086,12 +7116,18 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       modelCtrl.$setValidity('editable', true);
       modelCtrl.$setValidity('parse', true);
 
+      var label = parserResult.viewMapper(originalScope, locals);
+
       onSelectCallback(originalScope, {
         $item: item,
         $model: model,
-        $label: parserResult.viewMapper(originalScope, locals),
+        $label: label,
         $event: evt
       });
+
+      if (valueFromLabel === 'true') {
+        $timeout(function() { element.val(label); });
+      }
 
       resetMatches();
 
@@ -7241,6 +7277,22 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       ngModelOptions = extractOptions(modelCtrl);
 
       scope.debounceUpdate = $parse(ngModelOptions.getOption('debounce'))(originalScope);
+
+      if (valueFromLabel === 'true') {
+        $q.when(parserResult.source(scope, {})).then(function(items) {
+          var id = modelCtrl.$viewValue;
+          console.log(id, items.map(function(item){
+            return {
+              id: item.id,
+              name: item.name
+            };
+          }));
+          var selectedItem = items.find(function(item){
+            return item.id == id;
+          });
+          selectedItem && element.val(selectedItem.name || selectedItem.title); 
+        });
+      }
 
       //plug into $parsers pipeline to open a typeahead on view changes initiated from DOM
       //$parsers kick-in on all the changes coming from the view as well as manually triggered by $setViewValue
