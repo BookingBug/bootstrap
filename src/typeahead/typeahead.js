@@ -64,8 +64,6 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     //a callback executed when a match is selected
     var onSelectCallback = $parse(attrs.typeaheadOnSelect);
 
-    var valueFromLabel = attrs.typeaheadValueFromLabel;
-
     //should it select highlighted popup value when losing focus?
     var isSelectOnBlur = angular.isDefined(attrs.typeaheadSelectOnBlur) ? originalScope.$eval(attrs.typeaheadSelectOnBlur) : false;
 
@@ -108,6 +106,9 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     var typeaheadPrepend = originalScope.$eval(attrs.typeaheadPrepend);
     var typeaheadAppend = originalScope.$eval(attrs.typeaheadAppend);
     var typeaheadNoResults = originalScope.$eval(attrs.typeaheadNoResults);
+
+    var valueFromLabel = attrs.typeaheadValueFromLabel;
+    var initLabel = originalScope.$eval(attrs.typeaheadInitLabel);
 
     var hasFocus;
 
@@ -571,7 +572,9 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
       scope.debounceUpdate = $parse(ngModelOptions.getOption('debounce'))(originalScope);
 
-      if (valueFromLabel === 'true') {
+      if (typeof initLabel !== undefined) {
+        $timeout(function(){ element.val(initLabel); }); 
+      } else if (valueFromLabel === 'true') {
         $q.when(parserResult.source(scope, {})).then(function(items) {
           var id = modelCtrl.$viewValue;
           var selectedItem = items.find(function(item){
