@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.5.4 - 2020-05-28
+ * Version: 2.5.4 - 2020-05-29
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module('ui.bootstrap.collapse', [])
@@ -6834,6 +6834,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     var parserResult = typeaheadParser.parse(attrs.uibTypeahead);
     var typeaheadPrepend = originalScope.$eval(attrs.typeaheadPrepend);
     var typeaheadAppend = originalScope.$eval(attrs.typeaheadAppend);
+    var typeaheadNoResults = originalScope.$eval(attrs.typeaheadNoResults);
 
     var hasFocus;
 
@@ -6973,6 +6974,19 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
                   model: matches[i]
                 });
               }
+            } else {
+              var i = 0;
+              var label = typeaheadNoResults || 'No results found';
+              scope.matches.push({
+                id: getMatchId(i),
+                label: label,
+                model: {
+                  name: label,
+                  message: true,
+                  noResults: true,
+                }
+              });
+              i++;
             }
 
             if (typeaheadPrepend) {
@@ -7110,6 +7124,13 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
       selected = true;
       locals[parserResult.itemName] = item = scope.matches[activeIdx].model;
+
+      if (item.message) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        return false;
+      }
+
       model = parserResult.modelMapper(originalScope, locals);
       $setModelValue(originalScope, model);
       modelCtrl.$setValidity('editable', true);
@@ -7280,12 +7301,6 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       if (valueFromLabel === 'true') {
         $q.when(parserResult.source(scope, {})).then(function(items) {
           var id = modelCtrl.$viewValue;
-          console.log(id, items.map(function(item){
-            return {
-              id: item.id,
-              name: item.name
-            };
-          }));
           var selectedItem = items.find(function(item){
             return item.id == id;
           });

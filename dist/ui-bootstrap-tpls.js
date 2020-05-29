@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.5.4 - 2020-05-28
+ * Version: 2.5.4 - 2020-05-29
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module("ui.bootstrap.tpls", ["uib/template/accordion/accordion-group.html","uib/template/accordion/accordion.html","uib/template/alert/alert.html","uib/template/carousel/carousel.html","uib/template/carousel/slide.html","uib/template/datepicker/datepicker.html","uib/template/datepicker/day.html","uib/template/datepicker/month.html","uib/template/datepicker/year.html","uib/template/datepickerPopup/popup.html","uib/template/modal/window.html","uib/template/pager/pager.html","uib/template/pagination/pagination.html","uib/template/tooltip/tooltip-html-popup.html","uib/template/tooltip/tooltip-popup.html","uib/template/tooltip/tooltip-template-popup.html","uib/template/popover/popover-html.html","uib/template/popover/popover-template.html","uib/template/popover/popover.html","uib/template/progressbar/bar.html","uib/template/progressbar/progress.html","uib/template/progressbar/progressbar.html","uib/template/rating/rating.html","uib/template/tabs/tab.html","uib/template/tabs/tabset.html","uib/template/timepicker/timepicker.html","uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]);
@@ -6835,6 +6835,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     var parserResult = typeaheadParser.parse(attrs.uibTypeahead);
     var typeaheadPrepend = originalScope.$eval(attrs.typeaheadPrepend);
     var typeaheadAppend = originalScope.$eval(attrs.typeaheadAppend);
+    var typeaheadNoResults = originalScope.$eval(attrs.typeaheadNoResults);
 
     var hasFocus;
 
@@ -6974,6 +6975,19 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
                   model: matches[i]
                 });
               }
+            } else {
+              var i = 0;
+              var label = typeaheadNoResults || 'No results found';
+              scope.matches.push({
+                id: getMatchId(i),
+                label: label,
+                model: {
+                  name: label,
+                  message: true,
+                  noResults: true,
+                }
+              });
+              i++;
             }
 
             if (typeaheadPrepend) {
@@ -7111,6 +7125,13 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
       selected = true;
       locals[parserResult.itemName] = item = scope.matches[activeIdx].model;
+
+      if (item.message) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        return false;
+      }
+
       model = parserResult.modelMapper(originalScope, locals);
       $setModelValue(originalScope, model);
       modelCtrl.$setValidity('editable', true);
@@ -7281,12 +7302,6 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       if (valueFromLabel === 'true') {
         $q.when(parserResult.source(scope, {})).then(function(items) {
           var id = modelCtrl.$viewValue;
-          console.log(id, items.map(function(item){
-            return {
-              id: item.id,
-              name: item.name
-            };
-          }));
           var selectedItem = items.find(function(item){
             return item.id == id;
           });

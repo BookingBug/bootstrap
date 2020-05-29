@@ -107,6 +107,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
     var parserResult = typeaheadParser.parse(attrs.uibTypeahead);
     var typeaheadPrepend = originalScope.$eval(attrs.typeaheadPrepend);
     var typeaheadAppend = originalScope.$eval(attrs.typeaheadAppend);
+    var typeaheadNoResults = originalScope.$eval(attrs.typeaheadNoResults);
 
     var hasFocus;
 
@@ -246,6 +247,19 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
                   model: matches[i]
                 });
               }
+            } else {
+              var i = 0;
+              var label = typeaheadNoResults || 'No results found';
+              scope.matches.push({
+                id: getMatchId(i),
+                label: label,
+                model: {
+                  name: label,
+                  message: true,
+                  noResults: true,
+                }
+              });
+              i++;
             }
 
             if (typeaheadPrepend) {
@@ -383,6 +397,13 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
       selected = true;
       locals[parserResult.itemName] = item = scope.matches[activeIdx].model;
+
+      if (item.message) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        return false;
+      }
+
       model = parserResult.modelMapper(originalScope, locals);
       $setModelValue(originalScope, model);
       modelCtrl.$setValidity('editable', true);
