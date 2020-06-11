@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.5.4 - 2020-06-03
+ * Version: 2.5.4 - 2020-06-10
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module("ui.bootstrap.tpls", ["uib/template/accordion/accordion-group.html","uib/template/accordion/accordion.html","uib/template/alert/alert.html","uib/template/carousel/carousel.html","uib/template/carousel/slide.html","uib/template/datepicker/datepicker.html","uib/template/datepicker/day.html","uib/template/datepicker/month.html","uib/template/datepicker/year.html","uib/template/datepickerPopup/popup.html","uib/template/modal/window.html","uib/template/pager/pager.html","uib/template/pagination/pagination.html","uib/template/tooltip/tooltip-html-popup.html","uib/template/tooltip/tooltip-popup.html","uib/template/tooltip/tooltip-template-popup.html","uib/template/popover/popover-html.html","uib/template/popover/popover-template.html","uib/template/popover/popover.html","uib/template/progressbar/bar.html","uib/template/progressbar/progress.html","uib/template/progressbar/progressbar.html","uib/template/rating/rating.html","uib/template/tabs/tab.html","uib/template/tabs/tabset.html","uib/template/timepicker/timepicker.html","uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]);
@@ -6956,7 +6956,37 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       var locals = {$viewValue: inputValue};
       isLoadingSetter(originalScope, true);
       isNoResultsSetter(originalScope, false);
-      $q.when(parserResult.source(originalScope, locals)).then(function(matches) {
+
+      var i = 0;
+
+      var prepend = [];
+      var append = [];
+
+      if (typeaheadPrepend) {
+        for (i=0; i<typeaheadPrepend.length; i++) {
+          var item = typeaheadPrepend[i];
+          prepend.push({
+            id: getMatchId(i),
+            label: item.name,
+            model: item
+          });
+        }
+      }
+
+      if (typeaheadAppend) {
+        for (var j=0; j<typeaheadAppend.length; j++) {
+          var item = typeaheadAppend[j];
+          append.push({
+            id: getMatchId(j + i + typeaheadAppend.length),
+            label: item.name,
+            model: item
+          });
+        }
+      }
+
+      scope.matches = [].concat(prepend, append);
+
+      modelCtrl.$viewValue && $q.when(parserResult.source(originalScope, locals)).then(function(matches) {
         //it might happen that several async queries were in progress if a user were typing fast
         //but we are interested only in responses that correspond to the current view value
         var onCurrentRequest = inputValue === modelCtrl.$viewValue;
@@ -6964,22 +6994,24 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
           if (matches && matches.length > 0 || typeaheadPrepend || typeaheadAppend) {
             scope.activeIdx = focusFirst ? 0 : -1;
             isNoResultsSetter(originalScope, false);
-            scope.matches.length = 0;
+            var results = [];
 
             //transform labels
             if (matches) {
-              for (var i = 0; i < matches.length; i++) {
-                locals[parserResult.itemName] = matches[i];
-                scope.matches.push({
-                  id: getMatchId(i),
+              for (var j=0; j < matches.length; j++) {
+                locals[parserResult.itemName] = matches[j];
+                var index = i + j;
+                results.push({
+                  id: getMatchId(index),
                   label: parserResult.viewMapper(scope, locals),
-                  model: matches[i]
+                  model: matches[index]
                 });
               }
+              scope.matches = [].concat(prepend, results, append);
+
             } else {
-              var i = 0;
               var label = typeaheadNoResults || 'No results found';
-              scope.matches.push({
+              results = [{
                 id: getMatchId(i),
                 label: label,
                 model: {
@@ -6987,32 +7019,8 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
                   message: true,
                   noResults: true,
                 }
-              });
-              i++;
-            }
-
-            if (typeaheadPrepend) {
-              for (var j=0; j<typeaheadPrepend.length; j++) {
-                var item = typeaheadPrepend[j];
-                var index = i + j;
-                scope.matches.splice(j,0,{
-                  id: getMatchId(index),
-                  label: item.name,
-                  model: item
-                });
-              }
-            }
-
-            if (typeaheadAppend) {
-              for (var k=0; k<typeaheadAppend.length; k++) {
-                var item = typeaheadAppend[k];
-                var index = i + (j || 0) + k;
-                scope.matches.splice(index,0,{
-                  id: getMatchId(index),
-                  label: item.name,
-                  model: item
-                });
-              }
+              }];
+              scope.matches = [].concat(prepend, results, append);
             }
 
             scope.query = inputValue;
@@ -7155,9 +7163,9 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
       //return focus to the input element if a match was selected via a mouse click event
       // use timeout to avoid $rootScope:inprog error
-      if (scope.$eval(attrs.typeaheadFocusOnSelect) !== false) {
-        $timeout(function() { element[0].focus(); }, 0, false);
-      }
+      // if (scope.$eval(attrs.typeaheadFocusOnSelect) !== false) {
+      //   $timeout(function() { element[0].focus(); }, 0, false);
+      // }
     };
 
     //bind keyboard events: arrows up(38) / down(40), enter(13) and tab(9), esc(27)
@@ -7219,11 +7227,11 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
     element.on('focus', function (evt) {
       hasFocus = true;
-      if (minLength === 0 && !modelCtrl.$viewValue) {
+      //if (minLength === 0 && !modelCtrl.$viewValue) {
         $timeout(function() {
           getMatchesAsync(modelCtrl.$viewValue, evt);
         }, 0);
-      }
+      //}
     });
 
     element.on('blur', function(evt) {
