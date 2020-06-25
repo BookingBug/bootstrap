@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.5.4 - 2020-06-10
+ * Version: 2.5.4 - 2020-06-25
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module('ui.bootstrap.collapse', [])
@@ -1635,6 +1635,7 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
       date = dateParser.fromTimezone(date, ngModelOptions.getOption('timezone'));
       ngModelCtrl.$setValidity('dateDisabled', !date ||
         this.element && !this.isDisabled(date));
+      $scope.$broadcast('uib:datepicker.focus');
     }
   };
 
@@ -1727,7 +1728,9 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   $scope.keys = { 13: 'enter', 32: 'space', 33: 'pageup', 34: 'pagedown', 35: 'end', 36: 'home', 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
 
   var focusElement = function() {
-    self.element[0].focus();
+    setTimeout(function(){
+      self.element.find('td button.active').focus();
+    });
   };
 
   // Listen for focus requests from popup directive
@@ -1755,6 +1758,11 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     } else {
       self.handleKeyDown(key, evt);
       self.refreshView();
+      if (['left', 'right', 'up', 'down'].includes(key)) {
+        setTimeout(function(){
+          self.element.find('td button').removeClass('active');
+        });
+      }
     }
   };
 
@@ -1767,10 +1775,26 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   });
 
   $element.on('keyup', function(evt) {
+    var key = $scope.keys[evt.which];
+
     $scope.$apply(function() {
       var dateLabel = angular.extend(createDateObject($scope.activeDt.date, 'fullDate')).label;
       if (dateLabel) {
         $(evt.target).closest('.uib-daypicker').find('.datepicker-selected-date').html(dateLabel);
+      }
+      if (evt.key === 'Tab') {
+        const btnActive = self.element.find('td button.active');
+        const btnInfo = self.element.find('td button.btn-info');
+        self.handleKeyDown(evt.shiftKey ? 'left' : 'right', evt);
+        setTimeout(function(){
+          self.element.find('td button').removeClass('active');
+          if (btnActive[0]) {
+            console.log('...');
+            btnActive.addClass('btn-info');
+          }
+        });
+      } else {
+        $scope.$broadcast('uib:datepicker.focus');
       }
     });
   });
