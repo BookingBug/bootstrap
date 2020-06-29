@@ -2,7 +2,7 @@
  * angular-ui-bootstrap
  * http://angular-ui.github.io/bootstrap/
 
- * Version: 2.5.4 - 2020-06-25
+ * Version: 2.5.4 - 2020-07-07
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module("ui.bootstrap.tpls", ["uib/template/accordion/accordion-group.html","uib/template/accordion/accordion.html","uib/template/alert/alert.html","uib/template/carousel/carousel.html","uib/template/carousel/slide.html","uib/template/datepicker/datepicker.html","uib/template/datepicker/day.html","uib/template/datepicker/month.html","uib/template/datepicker/year.html","uib/template/datepickerPopup/popup.html","uib/template/modal/window.html","uib/template/pager/pager.html","uib/template/pagination/pagination.html","uib/template/tooltip/tooltip-html-popup.html","uib/template/tooltip/tooltip-popup.html","uib/template/tooltip/tooltip-template-popup.html","uib/template/popover/popover-html.html","uib/template/popover/popover-template.html","uib/template/popover/popover.html","uib/template/progressbar/bar.html","uib/template/progressbar/progress.html","uib/template/progressbar/progressbar.html","uib/template/rating/rating.html","uib/template/tabs/tab.html","uib/template/tabs/tabset.html","uib/template/timepicker/timepicker.html","uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]);
@@ -1790,7 +1790,6 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
         setTimeout(function(){
           self.element.find('td button').removeClass('active');
           if (btnActive[0]) {
-            console.log('...');
             btnActive.addClass('btn-info');
           }
         });
@@ -6982,6 +6981,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       isNoResultsSetter(originalScope, false);
 
       var i = 0;
+      var j = 0;
 
       var prepend = [];
       var append = [];
@@ -6998,10 +6998,10 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       }
 
       if (typeaheadAppend) {
-        for (var j=0; j<typeaheadAppend.length; j++) {
+        for (j=0; j<typeaheadAppend.length; j++) {
           var item = typeaheadAppend[j];
           append.push({
-            id: getMatchId(j + i + typeaheadAppend.length),
+            id: getMatchId(j + i),
             label: item.name,
             model: item
           });
@@ -7022,9 +7022,9 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
             //transform labels
             if (matches) {
-              for (var j=0; j < matches.length; j++) {
-                locals[parserResult.itemName] = matches[j];
-                var index = i + j;
+              for (var ii=0; ii < matches.length; ii++) {
+                locals[parserResult.itemName] = matches[ii];
+                var index = i + ii;
                 results.push({
                   id: getMatchId(index),
                   label: parserResult.viewMapper(scope, locals),
@@ -7192,6 +7192,17 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       // }
     };
 
+    element.parent().off('keydown.button').on('keydown.button', '.typeahead__results-wrapper', function(evt){
+      if (scope.matches.length === 1) {
+        if ( evt.which === 13 || evt.which === 32) {
+          $(evt.target).click();
+        } else if (evt.which === 9 && !!element.parent().find('.typeahead__results-wrapper:focus')[0] && !evt.shiftKey) {
+          resetMatches();
+          scope.$digest();
+        }
+      }
+    });
+
     //bind keyboard events: arrows up(38) / down(40), enter(13) and tab(9), esc(27)
     element.on('keydown', function(evt) {
       //typeahead is open and an "interesting" key was pressed
@@ -7208,12 +7219,15 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
        * then clear the results
        */
       if (scope.activeIdx === -1 && shouldSelect || evt.which === 9 && !!evt.shiftKey) {
-        resetMatches();
-        scope.$digest();
+        var isButton = scope.matches.length === 1 && scope.matches[0].model.button && !evt.shiftKey;
+        if (!isButton) {
+          resetMatches();
+          scope.$digest();
+        }
         return;
       }
 
-      evt.preventDefault();
+      // evt.preventDefault();
       var target;
       switch (evt.which) {
         case 27: // escape
@@ -7235,7 +7249,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
           target.parentNode.scrollTop = target.offsetTop;
           break;
         default:
-          if (shouldSelect) {
+          if (evt.which === 13 || evt.which === 32) {
             scope.$apply(function() {
               if (angular.isNumber(scope.debounceUpdate) || angular.isObject(scope.debounceUpdate)) {
                 $$debounce(function() {

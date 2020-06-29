@@ -230,6 +230,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       isNoResultsSetter(originalScope, false);
 
       var i = 0;
+      var j = 0;
 
       var prepend = [];
       var append = [];
@@ -246,10 +247,10 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       }
 
       if (typeaheadAppend) {
-        for (var j=0; j<typeaheadAppend.length; j++) {
+        for (j=0; j<typeaheadAppend.length; j++) {
           var item = typeaheadAppend[j];
           append.push({
-            id: getMatchId(j + i + typeaheadAppend.length),
+            id: getMatchId(j + i),
             label: item.name,
             model: item
           });
@@ -270,9 +271,9 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
 
             //transform labels
             if (matches) {
-              for (var j=0; j < matches.length; j++) {
-                locals[parserResult.itemName] = matches[j];
-                var index = i + j;
+              for (var ii=0; ii < matches.length; ii++) {
+                locals[parserResult.itemName] = matches[ii];
+                var index = i + ii;
                 results.push({
                   id: getMatchId(index),
                   label: parserResult.viewMapper(scope, locals),
@@ -440,6 +441,17 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
       // }
     };
 
+    element.parent().off('keydown.button').on('keydown.button', '.typeahead__results-wrapper', function(evt){
+      if (scope.matches.length === 1) {
+        if ( evt.which === 13 || evt.which === 32) {
+          $(evt.target).click();
+        } else if (evt.which === 9 && !!element.parent().find('.typeahead__results-wrapper:focus')[0] && !evt.shiftKey) {
+          resetMatches();
+          scope.$digest();
+        }
+      }
+    });
+
     //bind keyboard events: arrows up(38) / down(40), enter(13) and tab(9), esc(27)
     element.on('keydown', function(evt) {
       //typeahead is open and an "interesting" key was pressed
@@ -456,12 +468,15 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
        * then clear the results
        */
       if (scope.activeIdx === -1 && shouldSelect || evt.which === 9 && !!evt.shiftKey) {
-        resetMatches();
-        scope.$digest();
+        var isButton = scope.matches.length === 1 && scope.matches[0].model.button && !evt.shiftKey;
+        if (!isButton) {
+          resetMatches();
+          scope.$digest();
+        }
         return;
       }
 
-      evt.preventDefault();
+      // evt.preventDefault();
       var target;
       switch (evt.which) {
         case 27: // escape
@@ -483,7 +498,7 @@ angular.module('ui.bootstrap.typeahead', ['ui.bootstrap.debounce', 'ui.bootstrap
           target.parentNode.scrollTop = target.offsetTop;
           break;
         default:
-          if (shouldSelect) {
+          if (evt.which === 13 || evt.which === 32) {
             scope.$apply(function() {
               if (angular.isNumber(scope.debounceUpdate) || angular.isObject(scope.debounceUpdate)) {
                 $$debounce(function() {
