@@ -42,6 +42,7 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
   this.modes = ['day', 'month', 'year'];
 
   [
+    'changePeriod',
     'customClass',
     'dateDisabled',
     'datepickerMode',
@@ -63,6 +64,7 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
     'yearRows'
   ].forEach(function(key) {
     switch (key) {
+      case 'changePeriod':
       case 'customClass':
       case 'dateDisabled':
         $scope[key] = $scope.datepickerOptions[key] || angular.noop;
@@ -285,6 +287,11 @@ angular.module('ui.bootstrap.datepicker', ['ui.bootstrap.dateparser', 'ui.bootst
         month = self.activeDate.getMonth() + direction * (self.step.months || 0);
     self.activeDate.setFullYear(year, month, 1);
     self.refreshView();
+    if ($scope.changePeriod && $scope.changePeriod !== angular.noop) {
+      $scope.changePeriod({date: self.activeDate, mode: $scope.datePickerMode }).then(function () {
+        self.refreshView();
+      });
+    }
   };
 
   $scope.toggleMode = function(direction) {
